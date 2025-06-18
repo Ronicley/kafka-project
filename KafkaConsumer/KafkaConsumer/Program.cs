@@ -1,36 +1,114 @@
-﻿using Confluent.Kafka;
+﻿using System;
+using System.Net;
+using System.Runtime.Serialization;
+using System.Threading;
+using Avro.Generic;
+using Confluent.Kafka;
+using Confluent.Kafka.SyncOverAsync;
+using Confluent.SchemaRegistry;
+using Confluent.SchemaRegistry.Serdes;
 
-class Program
+namespace KafkaConsumer
 {
-    static void Main(string[] args)
+    [DataContract(Name = "User", Namespace = "com.meudominio.models")]
+    public class User
     {
-        var config = new ConsumerConfig
-        {
-            BootstrapServers = "localhost:9092",
-            GroupId = "dotnet-consumer-group",
-            AutoOffsetReset = AutoOffsetReset.Earliest
-        };
+        [DataMember(Name = "email")]
+        public string Email { get; set; }
 
-        using (var consumer = new ConsumerBuilder<Ignore, string>(config).Build())
-        {
-            consumer.Subscribe("cross-platform-topic");
+        [DataMember(Name = "name")]
+        public string Name { get; set; }
 
-            Console.WriteLine("Consumer .NET iniciado. Aguardando mensagens...");
+        [DataMember(Name = "age")]
+        public int Age { get; set; }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            var schemaConfig = new SchemaRegistryConfig { Url = "http://localhost:8081" };
+            var consumerConfig = new ConsumerConfig
+            {
+                BootstrapServers    = "localhost:9092",
+                GroupId             = "user-consumer-group",
+                AutoOffsetReset     = AutoOffsetReset.Earliest,
+                EnableAutoCommit    = false
+            };
+
+            using var schemaRegistry = new CachedSchemaRegistryClient(schemaConfig);
+
+            // Desserializador para GenericRecord
+            var genericDeserializer = new AvroDeserializer<GenericRecord>(schemaRegistry)
+                                          .AsSyncOverAsync();
+
+            using var consumer = new ConsumerBuilder<string, GenericRecord>(consumerConfig)
+                .SetValueDeserializer(genericDeserializer)
+                .SetErrorHandler((_, e) => Console.WriteLine($"Error: {e.Reason}"))
+                .Build();
+
+            consumer.Subscribe("users");
+            Console.WriteLine("Consumer iniciado. Aguardando mensagens...");
+
+            var cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (_, e) =>
+            {
+                e.Cancel = true;
+                cts.Cancel();
+            };
 
             try
             {
-                while (true)
+                while (!cts.IsCancellationRequested)
                 {
-                    var result = consumer.Consume(TimeSpan.FromSeconds(1));
-                    if (result != null)
+                    try
                     {
-                        Console.WriteLine($"[Partição: {result.Partition}] Key: {result.Message.Key} | Valor: {result.Message.Value}");
+                        var result = consumer.Consume(cts.Token);
+                        var record = result.Message.Value!;  // GenericRecord
+
+                        // Mapeia para sua classe POCO User usando o indexador e cast explícito
+                        var user = new User
+                        {
+                            Email = (string) record["email"],
+                            Name  = (string) record["name"],
+                            Age   = (int)    record["age"]
+                        };
+
+                        Console.WriteLine($"Received: {user.Email}, {user.Name}, {user.Age}");
+                        consumer.Commit(result);
+                    }
+                    catch (ConsumeException e) when (e.Error.Code == ErrorCode.Local_ValueDeserialization)
+                    {
+                        Console.WriteLine($"❗ Erro de desserialização: {e.Error.Reason}");
+
+                        var raw = e.ConsumerRecord.Value;
+                        if (raw != null && raw.Length > 5)
+                        {
+                            try
+                            {
+                                // Extrai schema ID em big‑endian
+                                int networkOrderId = BitConverter.ToInt32(raw, 1);
+                                int schemaId = IPAddress.NetworkToHostOrder(networkOrderId);
+                                Console.WriteLine($"Schema ID (corrigido): {schemaId}");
+
+                                var schema = schemaRegistry.GetSchemaAsync(schemaId).Result;
+                                Console.WriteLine($"Schema: {schema.SchemaString}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"⛔ Erro no diagnóstico: {ex.Message}");
+                            }
+                        }
                     }
                 }
             }
-            catch (ConsumeException e)
+            catch (OperationCanceledException)
             {
-                Console.WriteLine($"Erro: {e.Error.Reason}");
+                // Ctrl+C pressionado — sai graciosamente
+            }
+            finally
+            {
+                consumer.Close();
             }
         }
     }

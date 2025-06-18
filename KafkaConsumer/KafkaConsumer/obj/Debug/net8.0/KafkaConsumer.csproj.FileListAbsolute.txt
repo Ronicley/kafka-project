@@ -40,3 +40,14 @@ C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\obj\Debug\net8.0\refint\Ka
 C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\obj\Debug\net8.0\KafkaConsumer.pdb
 C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\obj\Debug\net8.0\KafkaConsumer.genruntimeconfig.cache
 C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\obj\Debug\net8.0\ref\KafkaConsumer.dll
+C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\bin\Debug\net8.0\Avro.dll
+C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\bin\Debug\net8.0\Confluent.SchemaRegistry.dll
+C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\bin\Debug\net8.0\Confluent.SchemaRegistry.Serdes.Avro.dll
+C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\bin\Debug\net8.0\Microsoft.Extensions.Caching.Abstractions.dll
+C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\bin\Debug\net8.0\Microsoft.Extensions.Caching.Memory.dll
+C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
+C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\bin\Debug\net8.0\Microsoft.Extensions.Primitives.dll
+C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\bin\Debug\net8.0\Newtonsoft.Json.dll
+C:\Projetos\kafka-project\KafkaConsumer\KafkaConsumer\bin\Debug\net8.0\System.CodeDom.dll
